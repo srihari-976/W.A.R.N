@@ -1,0 +1,118 @@
+# Endpoint Agent Configuration
+
+# Agent identification
+agent_id: "endpoint-001"
+api_key: "your-api-key-here"
+
+# Communication settings
+communication:
+  server_url: "https://localhost:8000"
+  websocket_url: "wss://localhost:8000/ws"
+  heartbeat_interval: 30  # seconds
+  reconnect_interval: 5   # seconds
+  max_retries: 3
+
+# Data collection settings
+collector:
+  system_info_interval: 300  # seconds
+  process_info_interval: 60  # seconds
+  network_info_interval: 30  # seconds
+  software_info_interval: 3600  # seconds
+  security_events_interval: 60  # seconds
+  user_accounts_interval: 3600  # seconds
+  services_interval: 300  # seconds
+
+# Monitoring settings
+monitor:
+  # File system monitoring
+  file_monitor_paths:
+    - "C:\\Windows\\System32"
+    - "C:\\Program Files"
+    - "C:\\Program Files (x86)"
+    - "C:\\Users"
+  
+  # Registry monitoring
+  registry_monitor_paths:
+    - "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+    - "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce"
+    - "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies"
+    - "SYSTEM\\CurrentControlSet\\Services"
+    - "SYSTEM\\CurrentControlSet\\Control\\Session Manager"
+  
+  # Process monitoring
+  process_monitor_interval: 1  # seconds
+  process_whitelist:
+    - "svchost.exe"
+    - "explorer.exe"
+    - "System"
+    - "Idle"
+  
+  # Network monitoring
+  network_monitor_interval: 1  # seconds
+  network_whitelist:
+    - "127.0.0.1"
+    - "::1"
+  
+  # Service monitoring
+  service_monitor_interval: 5  # seconds
+  service_whitelist:
+    - "Windows Update"
+    - "Windows Defender"
+    - "Windows Firewall"
+
+# Logging settings
+logging:
+  level: "INFO"
+  file: "logs/endpoint_agent.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Security settings
+security:
+  ssl_verify: true
+  ssl_cert_path: "certs/ca.crt"
+  ssl_key_path: "certs/client.key"
+  ssl_cert_path: "certs/client.crt"
+  
+  # File integrity monitoring
+  file_integrity:
+    enabled: true
+    check_interval: 3600  # seconds
+    critical_paths:
+      - "C:\\Windows\\System32\\drivers"
+      - "C:\\Windows\\System32\\config"
+      - "C:\\Windows\\System32\\winevt\\Logs"
+  
+  # Process protection
+  process_protection:
+    enabled: true
+    block_suspicious: true
+    alert_on_unknown: true
+  
+  # Network protection
+  network_protection:
+    enabled: true
+    block_suspicious: true
+    alert_on_unknown: true
+  
+  # Service protection
+  service_protection:
+    enabled: true
+    block_suspicious: true
+    alert_on_unknown: true
+
+# Performance settings
+performance:
+  max_threads: 10
+  max_queue_size: 1000
+  batch_size: 100
+  compression_enabled: true
+  compression_level: 6  # 0-9, higher means better compression but slower
+
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_delay: 5  # seconds
+  error_threshold: 10
+  error_reset_interval: 3600  # seconds 

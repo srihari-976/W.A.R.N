@@ -1,0 +1,393 @@
+{
+    "info": {
+        "name": "Endpoint Agent API",
+        "description": "Collection of API endpoints for the Endpoint Agent application",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Register User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"SecurePass123!\",\n    \"role\": \"analyst\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/register",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "register"]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"SecurePass123!\",\n    \"role\": \"analyst\"\n}"
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "header": [],
+                            "body": "{\n    \"message\": \"User registered successfully\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"SecurePass123!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/login",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "auth", "login"]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"SecurePass123!\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [],
+                            "body": "{\n    \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Agent Management",
+            "item": [
+                {
+                    "name": "Register Agent",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"hostname\": \"DESKTOP-ABC123\",\n    \"os\": \"Windows 10\",\n    \"ip_address\": \"192.168.1.100\",\n    \"agent_version\": \"1.0.0\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/agent/register",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "agent", "register"]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"hostname\": \"DESKTOP-ABC123\",\n    \"os\": \"Windows 10\",\n    \"ip_address\": \"192.168.1.100\",\n    \"agent_version\": \"1.0.0\"\n}"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [],
+                            "body": "{\n    \"message\": \"Agent registered successfully\",\n    \"asset_id\": 123,\n    \"configuration\": {\n        \"scan_interval\": 300,\n        \"log_level\": \"INFO\",\n        \"max_retries\": 3\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Asset Management",
+            "item": [
+                {
+                    "name": "Get All Assets",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/assets?page=1&per_page=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "assets"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "GET"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [],
+                            "body": "{\n    \"assets\": [\n        {\n            \"id\": 1,\n            \"hostname\": \"DESKTOP-ABC123\",\n            \"os_type\": \"Windows 10\",\n            \"ip_address\": \"192.168.1.100\",\n            \"agent_version\": \"1.0.0\",\n            \"asset_type\": \"endpoint\",\n            \"status\": \"active\",\n            \"last_seen\": \"2024-03-20T10:30:00Z\"\n        }\n    ],\n    \"total\": 1,\n    \"page\": 1,\n    \"per_page\": 10\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Event Management",
+            "item": [
+                {
+                    "name": "Get All Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/events?page=1&per_page=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "events"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "GET"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [],
+                            "body": "{\n    \"events\": [\n        {\n            \"id\": 1,\n            \"event_type\": \"login_attempt\",\n            \"severity\": \"high\",\n            \"source_ip\": \"192.168.1.100\",\n            \"timestamp\": \"2024-03-20T10:30:00Z\",\n            \"details\": {\n                \"username\": \"admin\",\n                \"success\": false,\n                \"attempt_count\": 5\n            }\n        }\n    ],\n    \"total\": 1,\n    \"page\": 1,\n    \"per_page\": 10\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Risk Assessment",
+            "item": [
+                {
+                    "name": "Get Risk Scores",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/risk/scores?asset_id=1&min_score=0.7",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "risk", "scores"],
+                            "query": [
+                                {
+                                    "key": "asset_id",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "min_score",
+                                    "value": "0.7"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "GET"
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [],
+                            "body": "{\n    \"risk_scores\": [\n        {\n            \"id\": 1,\n            \"asset_id\": 1,\n            \"score\": 0.85,\n            \"factors\": {\n                \"vulnerability_score\": 0.7,\n                \"threat_score\": 0.9,\n                \"exposure_score\": 0.8\n            },\n            \"timestamp\": \"2024-03-20T10:30:00Z\"\n        }\n    ],\n    \"total\": 1,\n    \"limit\": 100,\n    \"offset\": 0\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Response Management",
+            "item": [
+                {
+                    "name": "Create Response",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Block Suspicious IP\",\n    \"action_type\": \"block_ip\",\n    \"parameters\": {\n        \"ip_address\": \"192.168.1.100\",\n        \"duration\": 3600\n    }\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/responses",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "responses"]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Block Suspicious IP\",\n    \"action_type\": \"block_ip\",\n    \"parameters\": {\n        \"ip_address\": \"192.168.1.100\",\n        \"duration\": 3600\n    }\n}"
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "header": [],
+                            "body": "{\n    \"message\": \"Response created successfully\",\n    \"response\": {\n        \"id\": 1,\n        \"name\": \"Block Suspicious IP\",\n        \"action_type\": \"block_ip\",\n        \"parameters\": {\n            \"ip_address\": \"192.168.1.100\",\n            \"duration\": 3600\n        },\n        \"status\": \"active\"\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Machine Learning",
+            "item": [
+                {
+                    "name": "Create ML Model",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Anomaly Detector v1\",\n    \"model_type\": \"anomaly_detection\",\n    \"description\": \"Detects anomalous behavior in system logs\",\n    \"parameters\": {\n        \"threshold\": 0.95,\n        \"window_size\": 1000\n    },\n    \"performance_metrics\": {\n        \"accuracy\": 0.98,\n        \"f1_score\": 0.97\n    },\n    \"features\": [\"timestamp\", \"event_type\", \"source_ip\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ml/models",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "ml", "models"]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Success Response",
+                            "originalRequest": {
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"name\": \"Anomaly Detector v1\",\n    \"model_type\": \"anomaly_detection\",\n    \"description\": \"Detects anomalous behavior in system logs\",\n    \"parameters\": {\n        \"threshold\": 0.95,\n        \"window_size\": 1000\n    },\n    \"performance_metrics\": {\n        \"accuracy\": 0.98,\n        \"f1_score\": 0.97\n    },\n    \"features\": [\"timestamp\", \"event_type\", \"source_ip\"]\n}"
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "header": [],
+                            "body": "{\n    \"message\": \"Model created successfully\",\n    \"model\": {\n        \"id\": 1,\n        \"name\": \"Anomaly Detector v1\",\n        \"model_type\": \"anomaly_detection\",\n        \"description\": \"Detects anomalous behavior in system logs\",\n        \"parameters\": {\n            \"threshold\": 0.95,\n            \"window_size\": 1000\n        },\n        \"performance_metrics\": {\n            \"accuracy\": 0.98,\n            \"f1_score\": 0.97\n        },\n        \"features\": [\"timestamp\", \"event_type\", \"source_ip\"],\n        \"status\": \"active\"\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [""]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set JWT token after login",
+                    "if (pm.info.requestName === \"Login\") {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.environment.set(\"jwt_token\", jsonData.access_token);",
+                    "}",
+                    "",
+                    "// Common test for all requests",
+                    "pm.test(\"Status code is successful\", function () {",
+                    "    pm.response.to.be.success;",
+                    "});",
+                    "",
+                    "pm.test(\"Response has correct structure\", function () {",
+                    "    var jsonData = pm.response.json();",
+                    "    pm.expect(jsonData).to.be.an('object');",
+                    "});"
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:5000",
+            "type": "string"
+        }
+    ]
+} 
