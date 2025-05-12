@@ -139,10 +139,6 @@ flake8 backend/
 4. Run tests and linting
 5. Submit a pull request
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## Support
 
 For support, please:
