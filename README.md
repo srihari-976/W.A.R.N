@@ -1,4 +1,4 @@
-# W.A.R.N
+# W.A.R.N (Watchdog AI for Risk Neutralization)
 
 This is a modern, cyberpunk-themed endpoint security monitoring system built for BrinHack 2025. It provides real-time monitoring of endpoint security metrics, alerts, and events with a beautiful neon-styled interface.
 
