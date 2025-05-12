@@ -1,4 +1,4 @@
-# EndpointGuard Frontend
+# W.A.R.N Frontend
 
 A modern, cyberpunk-themed security dashboard for endpoint protection and monitoring.
 
@@ -32,8 +32,8 @@ A modern, cyberpunk-themed security dashboard for endpoint protection and monito
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-org/endpointguard-frontend.git
-cd endpointguard-frontend
+git clone https://github.com/your-org/W.A.R.N-frontend.git
+cd W.A.R.N-frontend
 ```
 
 2. Install dependencies:
@@ -102,7 +102,3 @@ The frontend connects to a backend API running on `http://localhost:5000`. The f
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## License
-
-MIT License - see LICENSE file for details 
