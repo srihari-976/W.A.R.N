@@ -1,6 +1,6 @@
 # W.A.R.N
 
-A modern, cyberpunk-themed endpoint security monitoring system built for BrinHack 2025. This system provides real-time monitoring of endpoint security metrics, alerts, and events with a beautiful neon-styled interface.
+This is a modern, cyberpunk-themed endpoint security monitoring system built for BrinHack 2025. It provides real-time monitoring of endpoint security metrics, alerts, and events with a beautiful neon-styled interface.
 
 ## Features
 
@@ -48,8 +48,4 @@ The system expects the following backend API endpoints:
 
 ## Contributing
 
-This project was created for BrinHack 2025. Feel free to fork and modify for your own use.
-
-## License
-
-MIT License - feel free to use this project for your own purposes. 
+This project was created for BrinHack 2025. Feel free to fork and modify it for your use.
