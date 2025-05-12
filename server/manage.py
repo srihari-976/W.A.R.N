@@ -140,10 +140,20 @@ def run():
 
 @cli.command()
 def all():
-    """Run setup, tests, and start server"""
+    """Run setup, tests, start server, and start brute force agent"""
     setup()
     test()
-    run()
+    # Start the server in a subprocess
+    server_proc = subprocess.Popen([sys.executable, '-m', 'flask', 'run', '--host=0.0.0.0', '--port=5000'])
+    click.echo('Started development server.')
+    # Start the agent script in a subprocess
+    agent_path = os.path.join('backend', 'agent_bruteforce_monitor.py')
+    agent_proc = subprocess.Popen([sys.executable, agent_path])
+    click.echo('Started brute force detection agent.')
+    # Wait for the server process to finish
+    server_proc.wait()
+    # Optionally, terminate the agent when the server stops
+    agent_proc.terminate()
 
 def show_help():
     """Show help message"""

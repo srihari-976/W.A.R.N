@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-cyber-black text-neon-blue;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.cyber-button-blue {
+  @apply px-4 py-2 bg-cyber-dark border border-neon-blue/20 
+         text-neon-blue rounded hover:bg-neon-blue/10 
+         transition-all duration-300 hover:shadow-neon-glow;
+}
+
+.cyber-button-purple {
+  @apply px-4 py-2 bg-cyber-dark border border-neon-purple/20 
+         text-neon-purple rounded hover:bg-neon-purple/10 
+         transition-all duration-300 hover:shadow-neon-glow-purple;
+}
+
+.cyber-button-pink {
+  @apply px-4 py-2 bg-cyber-dark border border-neon-pink/20 
+         text-neon-pink rounded hover:bg-neon-pink/10 
+         transition-all duration-300 hover:shadow-neon-glow-pink;
+}
+
+.cyber-panel {
+  @apply bg-cyber-dark border border-neon-blue/20 rounded-lg p-6;
+}
+
+.cyber-input {
+  @apply bg-cyber-gray border border-neon-blue/20 rounded px-4 py-2 
+         text-neon-blue placeholder-neon-blue/40 focus:outline-none 
+         focus:border-neon-blue/60 transition-all duration-300;
+}
+
+.cyber-select {
+  @apply bg-cyber-gray border border-neon-blue/20 rounded px-4 py-2 
+         text-neon-blue focus:outline-none focus:border-neon-blue/60 
+         transition-all duration-300;
+}
+
+.cyber-checkbox {
+  @apply w-4 h-4 border border-neon-blue/20 rounded;
+}
+.cyber-checkbox:checked {
+  @apply bg-neon-blue border-neon-blue;
+}
+.cyber-checkbox:focus {
+  @apply outline-none ring-2 ring-neon-blue/50;
+}
+
+.cyber-radio {
+  @apply w-4 h-4 border border-neon-blue/20 rounded-full;
+}
+.cyber-radio:checked {
+  @apply bg-neon-blue border-neon-blue;
+}
+.cyber-radio:focus {
+  @apply outline-none ring-2 ring-neon-blue/50;
+}
+
+.cyber-table {
+  @apply w-full border-collapse;
+}
+.cyber-table th {
+  @apply bg-cyber-gray text-neon-blue/80 font-medium px-6 py-3 text-left;
+}
+.cyber-table td {
+  @apply border-t border-neon-blue/10 px-6 py-4;
+}
+.cyber-table tr:hover {
+  @apply bg-neon-blue/5;
+}
+
+.cyber-card {
+  @apply bg-cyber-dark border border-neon-blue/20 rounded-lg p-6 
+         hover:shadow-neon-glow transition-all duration-300;
+}
+
+.cyber-badge {
+  @apply px-2 py-1 rounded text-xs font-medium;
+}
+.cyber-badge-blue {
+  @apply bg-neon-blue/10 text-neon-blue border border-neon-blue/20;
+}
+.cyber-badge-purple {
+  @apply bg-neon-purple/10 text-neon-purple border border-neon-purple/20;
+}
+.cyber-badge-pink {
+  @apply bg-neon-pink/10 text-neon-pink border border-neon-pink/20;
+}
+
+/* Scrollbar (non-@apply for pseudo-elements) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background-color: #1e1e26; /* cyber-gray */
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 243, 255, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 243, 255, 0.4);
+}
+
+/* Grid background */
+.cyber-grid {
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
