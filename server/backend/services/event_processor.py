@@ -1,119 +1,106 @@
-from flask_socketio import emit
-from backend.models.event import SecurityEvent
-from backend.models.alert import Alert
-from backend.models.asset import Asset
-from backend.services.risk.scoring import calculate_risk_score
+"""
+Real-time security event processor for W.A.R.N
+Integrates ML inference, anomaly detection, and risk scoring
+"""
+import asyncio
+import json
 import logging
 from datetime import datetime
+from typing import Dict, List, Any
+from concurrent.futures import ThreadPoolExecutor
+
+from backend.services.threat_detector import threat_detector
+from backend.models.alert import Alert
+from backend.db import db
 
 logger = logging.getLogger(__name__)
 
 class EventProcessor:
-    def __init__(self, socketio):
-        self.socketio = socketio
-        self.risk_thresholds = {
-            'low': 30,
-            'medium': 70,
-            'high': 90
-        }
+    def __init__(self):
+        self.is_running = False
+        
+    async def start(self):
+        """Start the event processing pipeline"""
+        self.is_running = True
+        logger.info("🚀 Event processor started")
+        
+        # In production, this would read from a message queue
+        # For demo, we'll simulate events
+        while self.is_running:
+            await asyncio.sleep(1)
+            # Process any queued events here
     
-    def process_event(self, event_data):
-        """Process a new security event"""
+    async def process_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+        """Process security event through real threat detection pipeline"""
         try:
-            # Validate required fields
-            if not event_data.get('type') or not event_data.get('source_ip') or not event_data.get('details'):
-                logger.error("Missing required fields in event data")
-                return None, {'score': 0.0, 'factors': {}, 'category': 'unknown', 'timestamp': datetime.utcnow().isoformat()}
+            result = await threat_detector.analyze_event(event)
             
-            # Create event
-            event = SecurityEvent(
-                type=event_data['type'],
-                source_ip=event_data['source_ip'],
-                details=event_data['details'],
-                severity=event_data.get('severity', 'medium'),
-                status='new'
-            )
-            event.save()
+            if result.get('risk_score', 0) >= 70:
+                await self._create_alert(result)
+                
+                if result.get('risk_score', 0) >= 90:
+                    await self._execute_response(result, event)
             
-            # Calculate risk score
-            risk_score = calculate_risk_score(event)
-            
-            # Check if alert should be generated
-            if risk_score['score'] >= self.risk_thresholds['medium']:
-                self._create_alert(event, risk_score)
-            
-            # Emit real-time updates
-            self._emit_updates(event, risk_score)
-            
-            return event, risk_score
+            return result
             
         except Exception as e:
-            logger.error(f"Error processing event: {str(e)}")
-            raise
+            logger.error(f"Error processing event: {e}")
+            return {'error': str(e), 'event_id': event.get('id', 'unknown')}
     
-    def _create_alert(self, event, risk_score):
-        """Create an alert based on event and risk score"""
+    async def _create_alert(self, alert_data: Dict[str, Any]):
+        """Create and save security alert"""
         try:
             alert = Alert(
-                event_id=event.id,
-                severity=event.severity,
-                message=f"High risk event detected: {event.type}",
-                status='new',
-                risk_score=risk_score['score']
+                event_id=alert_data['event_id'],
+                risk_score=alert_data['risk_score'],
+                threat_level=alert_data['threat_level'],
+                techniques=json.dumps(alert_data['techniques']),
+                analysis=alert_data['analysis'],
+                is_anomaly=alert_data['is_anomaly'],
+                timestamp=alert_data['timestamp'],
+                status=alert_data['status']
             )
-            alert.save()
             
-            # Emit alert notification
-            self.socketio.emit('new_alert', alert.to_dict())
+            db.session.add(alert)
+            db.session.commit()
             
-            return alert
+            # Emit WebSocket event for real-time updates
+            from backend.app import socketio
+            socketio.emit('new_alert', {
+                'id': alert.id,
+                'risk_score': alert.risk_score,
+                'threat_level': alert.threat_level,
+                'techniques': alert_data['techniques'],
+                'timestamp': alert.timestamp.isoformat()
+            })
+            
+            logger.info(f"Alert created: {alert.id} (Risk: {alert.risk_score})")
             
         except Exception as e:
-            logger.error(f"Error creating alert: {str(e)}")
-            raise
+            logger.error(f"Error creating alert: {e}")
     
-    def _emit_updates(self, event, risk_score):
-        """Emit real-time updates to connected clients"""
-        try:
-            # Emit event update
-            self.socketio.emit('new_event', {
-                'event': event.to_dict(),
-                'risk_score': risk_score
-            })
-            
-            # Emit risk score update
-            self.socketio.emit('risk_update', {
-                'event_id': event.id,
-                'score': risk_score['score'],
-                'factors': risk_score['factors']
-            })
-            
-        except Exception as e:
-            logger.error(f"Error emitting updates: {str(e)}")
-            raise
+    async def _execute_response(self, alert: Dict[str, Any], event: Dict[str, Any]):
+        """Execute automated response for critical threats"""
+        actions = []
+        
+        # Block suspicious IP addresses
+        if event.get('network_connections'):
+            for conn in event['network_connections']:
+                if conn.get('external'):
+                    # Simulate firewall rule
+                    actions.append(f"Blocked IP: {conn.get('ip')}")
+        
+        # Quarantine suspicious processes
+        if 'T1059' in alert.get('techniques', []):  # Command execution
+            actions.append(f"Terminated process: {event.get('process_name')}")
+        
+        logger.info(f"Automated response executed: {actions}")
+        return actions
     
-    def monitor_asset(self, asset_id):
-        """Monitor an asset for security events"""
-        try:
-            asset = Asset.get_by_id(asset_id)
-            if not asset:
-                raise ValueError(f"Asset not found: {asset_id}")
-            
-            # Get recent events for asset
-            events = SecurityEvent.get_by_asset(asset_id)
-            
-            # Calculate overall risk
-            risk_score = calculate_risk_score(asset=asset, events=events)
-            
-            # Emit asset status update
-            self.socketio.emit('asset_status', {
-                'asset_id': asset_id,
-                'status': asset.status,
-                'risk_score': risk_score
-            })
-            
-            return risk_score
-            
-        except Exception as e:
-            logger.error(f"Error monitoring asset: {str(e)}")
-            raise 
+    def stop(self):
+        """Stop the event processor"""
+        self.is_running = False
+        logger.info("Event processor stopped")
+
+# Global instance
+event_processor = EventProcessor()

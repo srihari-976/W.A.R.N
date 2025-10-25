@@ -23,7 +23,9 @@ class Asset(db.Model):
     
     # Relationships
     owner = relationship('User', backref='assets')
-    events = relationship('SecurityEvent', back_populates='asset', lazy=True)
+    # Note: Removed invalid relationship to SecurityEvent due to missing foreign key.
+    # If needed later, add `asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'))` to SecurityEvent
+    # and define matching back_populates on both sides before re-enabling.
     
     def __repr__(self):
         return f'<Asset {self.id}: {self.name}>'

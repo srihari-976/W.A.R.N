@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instagram - W.A.R.N Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; padding: 40px; border-radius: 12px; width: 350px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        h1 { text-align: center; font-size: 48px; margin: 0 0 30px 0; color: #262626; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0095f6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button:disabled { background: #ccc; }
+        .alert { padding: 12px; margin: 10px 0; border-radius: 6px; }
+        .warning { background: #fff3cd; color: #856404; }
+        .danger { background: #f8d7da; color: #721c24; }
+        .critical { background: #dc3545; color: white; font-weight: bold; }
+        .counter { text-align: center; margin: 15px 0; font-size: 13px; color: #666; }
+        .locked { text-align: center; padding: 30px; }
+        .locked h2 { color: #dc3545; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instagram</h1>
+        <div id="alert"></div>
+        <div id="form">
+            <input type="text" id="username" placeholder="Phone number, username, or email">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Log In</button>
+            <div class="counter" id="counter">3 attempts remaining</div>
+        </div>
+        <div id="locked" style="display:none;">
+            <div class="locked">
+                <h2>🔒 Account Locked</h2>
+                <p><strong>W.A.R.N Security Action:</strong></p>
+                <p>Browser terminated and IP blocked.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let attempts = 0;
+        
+        function showAlert(msg, type) {
+            document.getElementById('alert').innerHTML = `<div class="alert ${type}">${msg}</div>`;
+        }
+        
+        function updateCounter() {
+            const remaining = 3 - attempts;
+            document.getElementById('counter').textContent = `${remaining} attempt${remaining !== 1 ? 's' : ''} remaining`;
+        }
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showAlert('Please enter username and password', 'warning');
+                return;
+            }
+            
+            attempts++;
+            updateCounter();
+            
+            // Simulate security responses
+            if (attempts === 1) {
+                showAlert('Invalid credentials. System isolation initiated.', 'warning');
+            } else if (attempts === 2) {
+                showAlert('Invalid credentials. Password reset required.', 'danger');
+            } else if (attempts >= 3) {
+                showAlert('CRITICAL: Maximum attempts reached! Browser termination initiated.', 'critical');
+                
+                setTimeout(() => {
+                    document.getElementById('form').style.display = 'none';
+                    document.getElementById('locked').style.display = 'block';
+                    
+                    // Try to connect to backend
+                    fetch('http://localhost:5000/demo/instagram-login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password, ip: '192.168.1.100' })
+                    }).catch(() => console.log('Backend connection failed - demo mode'));
+                    
+                    setTimeout(() => {
+                        if (confirm('W.A.R.N Security: Browser will be terminated. Close window?')) {
+                            window.close();
+                        }
+                    }, 3000);
+                }, 1500);
+            }
+        }
+        
+        // Enter key support
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>

@@ -4,7 +4,7 @@ import axios from 'axios';
 import SecurityCard from '../common/SecurityCard';
 import StatusIndicator from '../common/StatusIndicator';
 
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = 'http://localhost:5000';
 
 const EndpointList = () => {
   const navigate = useNavigate();

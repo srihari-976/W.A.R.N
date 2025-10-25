@@ -24,7 +24,14 @@ def init_db(app):
     """Initialize the database with the app context"""
     with app.app_context():
         # Import models here to ensure they are registered with SQLAlchemy
-        from backend.models import User, Asset, Alert, SecurityEvent as Event, Response, alert_events, MLModel, RiskScore
+        from backend.models.user import User
+        from backend.models.asset import Asset
+        from backend.models.alert import Alert
+        from backend.models.event import Event
+        from backend.models.response import Response
+        from backend.models.ml_model import MLModel
+        from backend.models.risk_score import RiskScore
+        from backend.models.security_event import SecurityEvent, BlockedIP, LockedAccount
         
         # Create all tables
         db.create_all()

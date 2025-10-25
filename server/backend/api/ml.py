@@ -4,12 +4,12 @@ Handles endpoints for ML model management, training, and inference.
 """
 
 from flask import Blueprint, request, jsonify
-from models.ml_model import MLModel
-from services.ml.anomaly import AnomalyDetector, detect_anomalies
-from services.ml.classifier import SecurityClassifier
-from services.ml.feature_extraction import FeatureExtractor
-from services.llm.fine_tuning import FineTuningManager
-from services.llm.inference import analyze_event_context
+from backend.models.ml_model import MLModel
+from backend.services.ml.anomaly import AnomalyDetector
+from backend.services.ml.classifier import SecurityEventClassifier
+from backend.services.ml.feature_extraction import FeatureExtractor
+from backend.services.llm.fine_tuning import FineTuningManager
+from backend.services.llm.inference import analyze_event_context
 from . import api_bp
 import logging
 import numpy as np
@@ -22,7 +22,7 @@ ml_bp = Blueprint('ml', __name__)
 
 # Initialize ML components
 anomaly_detector = AnomalyDetector()
-threat_classifier = SecurityClassifier()
+threat_classifier = SecurityEventClassifier()
 feature_extractor = FeatureExtractor()
 fine_tuning_manager = FineTuningManager(
     base_model='llama2-7b',
@@ -226,98 +226,3 @@ def extract_event_features():
     
     return jsonify({'features': features})
 
-@api_bp.route('/ml/detect-anomalies', methods=['POST'])
-def detect_anomalies():
-    """Detect anomalies in event data"""
-    try:
-        data = request.get_json()
-        
-        # Validate required fields
-        if 'events' not in data:
-            return jsonify({'error': 'Missing events data'}), 400
-            
-        # Extract features
-        features = feature_extractor.extract_features(data['events'])
-        
-        # Detect anomalies
-        anomalies = anomaly_detector.detect_anomalies(features)
-        
-        return jsonify({
-            'anomalies': bool(anomalies[0]),
-            'confidence': float(anomaly_detector.get_anomaly_score(features)[0])
-        }), 200
-    except Exception as e:
-        logger.error(f"Error detecting anomalies: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
-
-@api_bp.route('/ml/classify-threat', methods=['POST'])
-def classify_threat():
-    """Classify security events into threat categories"""
-    try:
-        data = request.get_json()
-        
-        # Validate required fields
-        if 'event' not in data:
-            return jsonify({'error': 'Missing event data'}), 400
-            
-        # Extract features
-        features = feature_extractor.extract_features([data['event']])
-        
-        # Classify threat
-        prediction = threat_classifier.predict(features)
-        probabilities = threat_classifier.predict_proba(features)
-        
-        return jsonify({
-            'threat_type': prediction[0],
-            'confidence': float(np.max(probabilities[0])),
-            'probabilities': {
-                threat_classifier.classes_[i]: float(prob)
-                for i, prob in enumerate(probabilities[0])
-            }
-        }), 200
-    except Exception as e:
-        logger.error(f"Error classifying threat: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500
-
-@api_bp.route('/ml/train', methods=['POST'])
-def train_model():
-    """Train or retrain ML models"""
-    try:
-        data = request.get_json()
-        
-        # Validate required fields
-        if not all(k in data for k in ['model_type', 'training_data']):
-            return jsonify({'error': 'Missing required fields'}), 400
-            
-        model_type = data['model_type']
-        training_data = data['training_data']
-        
-        # Train appropriate model
-        if model_type == 'anomaly':
-            anomaly_detector.train(training_data)
-            model = MLModel(
-                name='Anomaly Detector',
-                type='anomaly',
-                version=anomaly_detector.version,
-                status='active'
-            )
-        elif model_type == 'classifier':
-            threat_classifier.train(training_data)
-            model = MLModel(
-                name='Threat Classifier',
-                type='classifier',
-                version=threat_classifier.version,
-                status='active'
-            )
-        else:
-            return jsonify({'error': 'Invalid model type'}), 400
-            
-        model.save()
-        
-        return jsonify({
-            'message': f'{model_type} model trained successfully',
-            'model': model.to_dict()
-        }), 200
-    except Exception as e:
-        logger.error(f"Error training model: {str(e)}")
-        return jsonify({'error': 'Internal server error'}), 500

@@ -154,3 +154,26 @@ class FeatureExtractor:
         except Exception as e:
             logger.error(f"Error extracting features: {e}")
             raise
+    
+    def get_feature_names(self) -> List[str]:
+        """Get list of feature names"""
+        feature_names = []
+        
+        # Temporal features
+        feature_names.extend(['hour', 'day_of_week', 'day_of_month', 'month', 'is_weekend'])
+        
+        # IP features (source and destination)
+        for prefix in ['src', 'dst']:
+            feature_names.extend([f'{prefix}_is_private', f'{prefix}_is_loopback', f'{prefix}_ip_numeric'])
+        
+        # Text features
+        for prefix in ['msg', 'desc']:
+            feature_names.extend([f'{prefix}_length', f'{prefix}_word_count', f'{prefix}_special_ratio'])
+        
+        # Categorical features
+        feature_names.extend(self.categorical_columns)
+        
+        # Numerical features
+        feature_names.extend(self.numerical_columns)
+        
+        return feature_names

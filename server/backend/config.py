@@ -8,7 +8,7 @@ class Config:
     DEBUG = True
     
     # Database configuration
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///dev.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///warn_security.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # JWT configuration

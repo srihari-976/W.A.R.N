@@ -165,6 +165,43 @@ class AnomalyDetector:
             logger.error(f"Error training model: {str(e)}")
             raise
 
+    def detect_anomalies(self, features: np.ndarray) -> np.ndarray:
+        """Detect anomalies in feature data"""
+        try:
+            if self.model is None:
+                raise ValueError("Model not trained")
+            
+            # Scale features
+            features_scaled = self.scaler.transform(features)
+            
+            # Get predictions (-1 for anomaly, 1 for normal)
+            predictions = self.model.predict(features_scaled)
+            
+            # Convert to boolean (True for anomaly)
+            return (predictions == -1).astype(int)
+            
+        except Exception as e:
+            logger.error(f"Error detecting anomalies: {e}")
+            return np.zeros(len(features), dtype=int)
+    
+    def get_anomaly_score(self, features: np.ndarray) -> np.ndarray:
+        """Get anomaly scores for features"""
+        try:
+            if self.model is None:
+                raise ValueError("Model not trained")
+            
+            # Scale features
+            features_scaled = self.scaler.transform(features)
+            
+            # Get anomaly scores
+            scores = -self.model.score_samples(features_scaled)
+            
+            return scores
+            
+        except Exception as e:
+            logger.error(f"Error getting anomaly scores: {e}")
+            return np.zeros(len(features))
+    
     def predict(self, events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Detect anomalies in events
@@ -204,6 +241,25 @@ class AnomalyDetector:
         except Exception as e:
             logger.error(f"Error detecting anomalies: {str(e)}")
             return events
+    
+    def fit(self, features: np.ndarray):
+        """Fit the anomaly detection model"""
+        try:
+            # Scale features
+            features_scaled = self.scaler.fit_transform(features)
+            
+            # Train model
+            self.model.fit(features_scaled)
+            
+            # Calculate threshold
+            scores = -self.model.score_samples(features_scaled)
+            self.threshold = np.percentile(scores, self.config.threshold_percentile)
+            
+            logger.info("Anomaly detection model trained successfully")
+            
+        except Exception as e:
+            logger.error(f"Error training model: {e}")
+            raise
 
     def save_model(self, path: str):
         """
@@ -381,3 +437,12 @@ class AnomalyDetector:
         except Exception as e:
             logger.error(f"Error analyzing anomalies: {str(e)}")
             return {}
+
+def detect_anomalies(events: List[Dict[str, Any]], model_path: str = None) -> List[Dict[str, Any]]:
+    """Standalone function to detect anomalies"""
+    try:
+        detector = AnomalyDetector(model_path)
+        return detector.predict(events)
+    except Exception as e:
+        logger.error(f"Error in detect_anomalies: {e}")
+        return events

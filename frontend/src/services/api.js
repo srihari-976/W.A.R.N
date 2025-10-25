@@ -1,28 +1,35 @@
 import axiosInstance from '../utils/axiosInstance';
 
-// Endpoint/Asset Services
-export const assetService = {
-  getAll: () => axiosInstance.get('/api/assets'),
-  getById: (id) => axiosInstance.get(`/api/assets/${id}`),
-  update: (id, data) => axiosInstance.put(`/api/assets/${id}`, data),
-  delete: (id) => axiosInstance.delete(`/api/assets/${id}`),
-  getRiskAssessment: (id) => axiosInstance.get(`/api/assets/${id}/risk-assessment`),
-  getActivityLog: (id) => axiosInstance.get(`/api/assets/${id}/activity-log`),
+// Auth Services
+export const authService = {
+  login: (credentials) => axiosInstance.post('/api/auth/login', credentials),
+  register: (userData) => axiosInstance.post('/api/auth/register', userData),
+  refresh: (refreshToken) => axiosInstance.post('/api/auth/refresh', { refresh_token: refreshToken }),
+  logout: () => axiosInstance.post('/api/auth/logout'),
+  getCurrentUser: () => axiosInstance.get('/api/auth/me'),
+};
+
+// Security Services
+export const securityService = {
+  scanURL: (url) => axiosInstance.post('/api/security/scan-url', { url }),
+  getBlockedIPs: () => axiosInstance.get('/api/security/blocked-ips'),
+  unblockIP: (ip) => axiosInstance.post('/api/security/unblock-ip', { ip_address: ip }),
+  getLockedAccounts: () => axiosInstance.get('/api/security/locked-accounts'),
+  unlockAccount: (username) => axiosInstance.post('/api/security/unlock-account', { username }),
+  killProcesses: (processName) => axiosInstance.post('/api/security/kill-processes', { process_name: processName }),
 };
 
 // Alert Services
 export const alertService = {
-  getAll: () => axiosInstance.get('/api/alerts'),
+  getAll: () => axiosInstance.get('/api/alerts/'),
   getById: (id) => axiosInstance.get(`/api/alerts/${id}`),
   updateStatus: (id, status) => axiosInstance.put(`/api/alerts/${id}/status`, { status }),
-  getByAssetId: (assetId) => axiosInstance.get(`/api/alerts/asset/${assetId}`),
 };
 
-// Security Test Services
-export const securityTestService = {
-  runTest: (assetId, testType) => axiosInstance.post(`/api/security-test/${assetId}`, { testType }),
-  getTestResults: (assetId) => axiosInstance.get(`/api/security-test/${assetId}/results`),
-  getTestHistory: (assetId) => axiosInstance.get(`/api/security-test/${assetId}/history`),
+// Risk Services
+export const riskService = {
+  getScores: () => axiosInstance.get('/api/risk/scores'),
+  getFactors: () => axiosInstance.get('/api/risk/factors'),
 };
 
 // Dashboard Services
@@ -30,13 +37,10 @@ export const dashboardService = {
   getMetrics: () => axiosInstance.get('/api/dashboard/metrics'),
   getRecentAlerts: () => axiosInstance.get('/api/dashboard/recent-alerts'),
   getAssetStatus: () => axiosInstance.get('/api/dashboard/asset-status'),
-  getActivityFeed: () => axiosInstance.get('/api/dashboard/activity-feed'),
 };
 
-// Risk Assessment Services
-export const riskService = {
-  getRiskLevel: (assetId) => axiosInstance.get(`/api/risk/${assetId}/level`),
-  getRiskFactors: (assetId) => axiosInstance.get(`/api/risk/${assetId}/factors`),
-  updateRiskMitigation: (assetId, data) => axiosInstance.put(`/api/risk/${assetId}/mitigation`, data),
-  getRiskHistory: (assetId) => axiosInstance.get(`/api/risk/${assetId}/history`),
-}; 
+// Convenience exports
+export const scanURL = (url) => securityService.scanURL(url);
+export const checkIPStatus = () => securityService.getBlockedIPs();
+export const unblockIP = (ip) => securityService.unblockIP(ip);
+export const unlockAccount = (username) => securityService.unlockAccount(username); 

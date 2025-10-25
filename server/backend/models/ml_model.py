@@ -23,6 +23,9 @@ class MLModel(db.Model):
     # Storage paths
     model_path = db.Column(db.String(255), nullable=True)
     
+    # Relationships - commented out until Prediction model is created
+    # predictions = db.relationship('Prediction', backref='ml_model', lazy=True)
+    
     def __init__(self, name, model_type, description=None, parameters=None, 
                  performance_metrics=None, features=None, status='created'):
         import uuid

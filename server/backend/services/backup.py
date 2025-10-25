@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 import logging
 from backend.db import db
-from backend.models.event import SecurityEvent
+from backend.models.security_event import SecurityEvent
 from backend.models.alert import Alert
 from backend.models.asset import Asset
 

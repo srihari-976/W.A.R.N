@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>Backend Test</title></head>
+<body>
+    <h1>W.A.R.N Backend Test</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testConnection() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('http://localhost:5000/test');
+                const data = await response.json();
+                result.innerHTML = `<p style="color:green">✅ Backend Connected: ${data.message}</p>`;
+            } catch (error) {
+                result.innerHTML = `<p style="color:red">❌ Backend Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

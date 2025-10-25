@@ -1,45 +1,38 @@
 from flask import Blueprint, request, jsonify
-from backend.models.risk_score import RiskScore
+from backend.services.threat_detector import threat_detector
+from backend.models.alert import Alert
+from backend.models.risk_score import RiskScore, calculate_risk_score
 from backend.models.asset import Asset
 from backend.models.event import Event
-from backend.services.risk.scoring import calculate_risk_score, get_risk_factors
 
 # Create Blueprint for risk API
 risk_bp = Blueprint('risk', __name__)
 
 @risk_bp.route('/scores', methods=['GET'])
 def get_risk_scores():
-    """Get risk scores with optional filtering"""
-    # Get query parameters
-    asset_id = request.args.get('asset_id')
-    event_id = request.args.get('event_id')
-    min_score = request.args.get('min_score')
-    max_score = request.args.get('max_score')
-    limit = int(request.args.get('limit', 100))
-    offset = int(request.args.get('offset', 0))
-    
-    # Build base query
-    query = RiskScore.query
-    
-    # Apply filters
-    if asset_id:
-        query = query.filter_by(asset_id=asset_id)
-    if event_id:
-        query = query.filter_by(event_id=event_id)
-    if min_score:
-        query = query.filter(RiskScore.score >= float(min_score))
-    if max_score:
-        query = query.filter(RiskScore.score <= float(max_score))
-    
-    # Apply pagination
-    risk_scores = query.offset(offset).limit(limit).all()
-    
-    return jsonify({
-        'risk_scores': [score.to_dict() for score in risk_scores],
-        'total': query.count(),
-        'limit': limit,
-        'offset': offset
-    })
+    """Get real risk scores from threat detection"""
+    try:
+        alerts = Alert.query.order_by(Alert.timestamp.desc()).limit(20).all()
+        
+        risk_data = []
+        for alert in alerts:
+            risk_data.append({
+                'id': alert.id,
+                'score': alert.risk_score,
+                'threat_level': alert.threat_level,
+                'techniques': alert.techniques,
+                'timestamp': alert.timestamp.isoformat(),
+                'category': 'high' if alert.risk_score >= 70 else 'medium' if alert.risk_score >= 40 else 'low'
+            })
+        
+        return jsonify({
+            'risk_scores': risk_data,
+            'total': len(risk_data),
+            'average_score': sum(r['score'] for r in risk_data) / len(risk_data) if risk_data else 0
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @risk_bp.route('/scores/<score_id>', methods=['GET'])
 def get_risk_score(score_id):
@@ -90,9 +83,15 @@ def create_risk_score():
     return jsonify(new_score.to_dict()), 201
 
 @risk_bp.route('/factors', methods=['GET'])
-def get_available_risk_factors():
-    """Get all available risk factors and their weights"""
-    factors = get_risk_factors()
+def get_risk_factors():
+    """Get MITRE ATT&CK technique risk factors"""
+    factors = {
+        'T1059': {'weight': 8.0, 'name': 'Command and Scripting Interpreter'},
+        'T1071': {'weight': 7.0, 'name': 'Application Layer Protocol'},
+        'T1547': {'weight': 7.0, 'name': 'Boot or Logon Autostart Execution'},
+        'T1566': {'weight': 8.5, 'name': 'Phishing'},
+        'T1486': {'weight': 9.5, 'name': 'Data Encrypted for Impact'}
+    }
     return jsonify({'risk_factors': factors})
 
 @risk_bp.route('/assets/highest', methods=['GET'])

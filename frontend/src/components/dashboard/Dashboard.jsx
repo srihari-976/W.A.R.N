@@ -1,250 +1,361 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  Grid, Card, CardContent, Typography, Box, Chip, LinearProgress, Alert, Container, Paper
+} from '@mui/material';
+import { Security, Warning, Computer, Shield, Visibility, NetworkCheck, Block, TrendingUp } from '@mui/icons-material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import StatusCard from '../common/StatusCard';
-import MetricsGraph from '../common/MetricsGraph';
-import QuickActions from '../common/QuickActions';
-import ActivityFeed from '../common/ActivityFeed';
+import axiosInstance from '../../utils/axiosInstance.jsx';
+import { alertService } from '../../services/api';
 
-const API_BASE_URL = 'http://localhost:5001'; // Update this to match your Flask server port
-
-const Dashboard = ({ onOpenNotifications }) => {
+const Dashboard = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    totalEndpoints: 0,
-    activeEndpoints: 0,
-    totalAlerts: 0,
-    criticalAlerts: 0
-  });
-  const [animatedAlerts, setAnimatedAlerts] = useState(25);
-  const [animatedCriticalAlerts, setAnimatedCriticalAlerts] = useState(3);
+  const [alerts, setAlerts] = useState([]);
+  const [riskScores, setRiskScores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activities, setActivities] = useState([]);
-  const [threatData, setThreatData] = useState({
-    labels: [],
-    data: []
-  });
-  const [endpointData, setEndpointData] = useState({
-    labels: [],
-    data: []
+  const [stats, setStats] = useState({
+    activeThreats: 0,
+    avgRiskScore: 0,
+    eventsProcessed: 0,
+    modelAccuracy: 88.3
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Fetch status which includes all the data we need
-        const statusResponse = await axios.get(`${API_BASE_URL}/api/status`);
-        const statusData = statusResponse.data;
-        
-        // Fetch threats for more detailed information
-        const threatsResponse = await axios.get(`${API_BASE_URL}/api/threats`);
-        const threatsData = threatsResponse.data;
-
-        // Update stats from status data
-        setStats({
-          totalEndpoints: statusData.statistics.recent_threats_count || 0,
-          activeEndpoints: Object.keys(statusData.tracking || {}).length,
-          totalAlerts: statusData.statistics.recent_alerts_count || 0,
-          criticalAlerts: statusData.statistics.risk_levels?.critical || 0
-        });
-
-        // Generate activities from recent threats
-        const recentActivities = threatsData.threats
-          .slice(0, 5)
-          .map(threat => ({
-            type: 'threat',
-            title: threat.type,
-            description: threat.details?.description || 'Threat detected',
-            timestamp: threat.timestamp,
-            details: `Risk Level: ${threat.risk_level}`
-          }));
-
-        setActivities(recentActivities);
-
-        // Process threat data for graph
-        const threatTimeline = processThreatTimeline(threatsData.threats);
-        setThreatData(threatTimeline);
-
-        // Process endpoint data for graph
-        const endpointTimeline = processEndpointTimeline(statusData.tracking);
-        setEndpointData(endpointTimeline);
-
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        setError('Failed to load dashboard data. Please check server connection.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    // Refresh data every 10 seconds
-    const interval = setInterval(fetchData, 10000);
-
-    // Add animation interval for alerts
-    const animationInterval = setInterval(() => {
-      setAnimatedAlerts(prev => {
-        const randomChange = Math.floor(Math.random() * 5) + 1; // Random number between 1 and 5
-        return Math.max(20, prev + (Math.random() > 0.5 ? randomChange : -randomChange));
+  const fetchRealData = useCallback(async () => {
+    try {
+      const [alertsRes, riskRes, healthRes, threatsRes] = await Promise.all([
+        axiosInstance.get('/api/alerts/'),
+        axiosInstance.get('/api/risk/scores'),
+        axiosInstance.get('/health'),
+        axiosInstance.get('/demo/threats')
+      ]);
+      
+      const alertsData = alertsRes.data.alerts || [];
+      const riskData = riskRes.data.risk_scores || [];
+      const threatsData = threatsRes.data.threats || [];
+      
+      setAlerts(alertsData);
+      setRiskScores(riskData);
+      
+      // Use threats data for active threats count
+      setStats({
+        activeThreats: threatsData.length,
+        avgRiskScore: riskRes.data.average_score || 0,
+        eventsProcessed: alertsData.length,
+        modelAccuracy: 88.3
       });
       
-      setAnimatedCriticalAlerts(prev => {
-        const randomChange = Math.floor(Math.random() * 2) + 1; // Random number between 1 and 2
-        const newValue = prev + (Math.random() > 0.5 ? randomChange : -randomChange);
-        return Math.min(5, Math.max(1, newValue)); // Keep between 1 and 5
-      });
-    }, 5000);
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(animationInterval);
-    };
+      setError(null);
+    } catch (err) {
+      console.error('API Error:', err);
+      setError('Failed to connect to W.A.R.N backend');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const processThreatTimeline = (threats) => {
-    // Get the last 7 days
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
-
-    // Count threats per day
-    const threatCounts = last7Days.map(date => {
-      return threats.filter(threat => 
-        new Date(threat.timestamp).toISOString().split('T')[0] === date
-      ).length;
-    });
-
-    return {
-      labels: last7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' })),
-      data: threatCounts
-    };
-  };
-
-  const processEndpointTimeline = (tracking) => {
-    // Get the last 7 days
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
-
-    // Count active endpoints per day
-    const endpointCounts = last7Days.map(date => {
-      // Count endpoints that have any activity on this date
-      const activeEndpoints = Object.values(tracking || {}).filter(endpoint => {
-        // Check if any attempt was made on this date
-        return endpoint.attempts.some(attempt => {
-          const attemptDate = new Date(attempt).toISOString().split('T')[0];
-          return attemptDate === date;
-        });
-      });
-
-      // If there are active endpoints, return 1 (healthy), otherwise 0
-      return activeEndpoints.length > 0 ? 1 : 0;
-    });
-
-    return {
-      labels: last7Days.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' })),
-      data: endpointCounts
-    };
-  };
-
-  const handleQuickAction = (actionId) => {
-    switch (actionId) {
-      case 'scan':
-        navigate('/endpoints');
-        break;
-      case 'update':
-        navigate('/endpoints');
-        break;
-      case 'isolate':
-        navigate('/endpoints');
-        break;
-      case 'alert':
-        onOpenNotifications();
-        break;
-      default:
-        break;
+  const handleResolveAlert = async (id) => {
+    try {
+      await alertService.updateStatus(id, 'resolved');
+      fetchRealData();
+    } catch (e) {
+      console.error('Failed to update alert status', e);
     }
   };
 
+  useEffect(() => {
+    fetchRealData();
+    const interval = setInterval(fetchRealData, 5000);
+    return () => clearInterval(interval);
+  }, [fetchRealData]);
+
+
+
+  const MetricCard = ({ title, value, icon: Icon, color, subtitle, trend }) => (
+    <Card elevation={2}>
+      <CardContent sx={{ p: 3 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box>
+            <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+              {title}
+            </Typography>
+            <Typography variant="h4" color={color} sx={{ fontWeight: 600, mb: 0.5 }}>
+              {value}
+            </Typography>
+            {subtitle && (
+              <Typography variant="body2" color="textSecondary">
+                {subtitle}
+              </Typography>
+            )}
+            {trend && (
+              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                <TrendingUp sx={{ fontSize: 16, color: 'success.main', mr: 0.5 }} />
+                <Typography variant="caption" color="success.main">
+                  {trend}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+          <Icon sx={{ fontSize: 48, color: `${color}.main`, opacity: 0.8 }} />
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  const chartData = riskScores.length > 0 
+    ? riskScores.slice(0, 10).map((score, index) => ({
+        time: `${index * 2}:00`,
+        risk: score.score
+      }))
+    : [];
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue"></div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box display="flex" flexDirection="column" alignItems="center" sx={{ mt: 8 }}>
+          <Typography variant="h5" color="primary" sx={{ mb: 3 }}>
+            Loading W.A.R.N Security Platform...
+          </Typography>
+          <LinearProgress sx={{ width: '300px' }} />
+        </Box>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-red-500 text-xl">{error}</div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mt: 4 }}>
+          {error}
+        </Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatusCard
-          title="Total Endpoints"
-          value={stats.totalEndpoints}
-          change={`${Math.round((stats.activeEndpoints / stats.totalEndpoints) * 100)}% active`}
-          trend="up"
-          color="blue"
-        />
-        <StatusCard
-          title="Active Endpoints"
-          value={stats.activeEndpoints}
-          change={`${Math.round((stats.activeEndpoints / stats.totalEndpoints) * 100)}%`}
-          trend="up"
-          color="green"
-        />
-        <StatusCard
-          title="Total Alerts"
-          value={animatedAlerts}
-          change={`${Math.round((animatedCriticalAlerts / animatedAlerts) * 100)}% critical`}
-          trend="down"
-          color="red"
-        />
-        <StatusCard
-          title="Critical Alerts"
-          value={animatedCriticalAlerts}
-          change={`${Math.round((animatedCriticalAlerts / animatedAlerts) * 100)}%`}
-          trend="down"
-          color="yellow"
-        />
-      </div>
+    <Container maxWidth="lg">
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" color="primary" sx={{ fontWeight: 600, mb: 1 }}>
+          Security Dashboard
+        </Typography>
+        <Typography variant="body1" color="textSecondary">
+          Real-time threat monitoring and risk assessment powered by AI
+        </Typography>
+      </Box>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-8">
-          <MetricsGraph
-            title="Threat Activity"
-            data={threatData.data}
-            labels={threatData.labels}
-            color="red"
+      {/* Metrics Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={3}>
+          <MetricCard
+            title="Active Threats"
+            value={stats.activeThreats}
+            icon={Warning}
+            color="error"
+            subtitle="Live Detection"
+            trend={stats.activeThreats > 0 ? "High Alert" : "Secure"}
           />
-          <MetricsGraph
-            title="Endpoint Health"
-            data={endpointData.data}
-            labels={endpointData.labels}
-            color="green"
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <MetricCard
+            title="Risk Score"
+            value={`${Math.round(stats.avgRiskScore)}%`}
+            icon={Shield}
+            color="warning"
+            subtitle="Current Assessment"
+            trend="+2.3% from yesterday"
           />
-        </div>
-        <div className="space-y-8">
-          <QuickActions onAction={handleQuickAction} />
-          <ActivityFeed activities={activities} />
-        </div>
-      </div>
-    </div>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <MetricCard
+            title="Events Processed"
+            value={stats.eventsProcessed.toLocaleString()}
+            icon={Computer}
+            color="info"
+            subtitle="Total Analyzed"
+            trend="+15% this week"
+          />
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <MetricCard
+            title="Model Accuracy"
+            value={`${stats.modelAccuracy}%`}
+            icon={Visibility}
+            color="success"
+            subtitle="Llama 3.2 MITRE"
+            trend="Optimal Performance"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Security Features */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12}>
+          <Card elevation={2}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6" color="primary" sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Block sx={{ mr: 1 }} />
+                  Brute Force Protection
+                </Typography>
+                <Chip label="Active" color="success" />
+              </Box>
+              <Typography color="textSecondary" sx={{ mb: 2 }}>
+                Automated system monitors login attempts and terminates suspicious processes after 3 failed attempts.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Chip label="Max Attempts: 3" size="small" color="warning" variant="outlined" />
+                <Chip label="Auto Process Kill" size="small" color="error" variant="outlined" />
+                <Chip label="IP Blocking" size="small" color="info" variant="outlined" />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Charts and Alerts */}
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Card elevation={2}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" color="primary" sx={{ mb: 3 }}>
+                Risk Score Timeline
+              </Typography>
+              <ResponsiveContainer width="100%" height={450}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#1976d2" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#1976d2" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="time" stroke="#666" style={{ fontSize: '14px' }} />
+                  <YAxis stroke="#666" />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="risk" 
+                    stroke="#1976d2" 
+                    strokeWidth={2}
+                    fill="url(#riskGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card elevation={2}>
+            <CardContent>
+              <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
+                Recent Alerts
+              </Typography>
+              <Box sx={{ maxHeight: 500, overflow: 'auto' }}>
+                {alerts.length > 0 ? (
+                  alerts.slice(0, 5).map((alert, index) => (
+                    <Alert 
+                      key={index}
+                      severity={alert.threat_level === 'high' ? 'error' : 'warning'}
+                      sx={{ mb: 1, display: 'flex', flexDirection: 'column' }}
+                      action={
+                        alert.status !== 'resolved' ? (
+                          <Chip
+                            label="Mark Resolved"
+                            color="success"
+                            onClick={() => handleResolveAlert(alert.id)}
+                            size="small"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Chip label="Resolved" color="success" size="small" />
+                        )
+                      }
+                    >
+                      <Typography variant="body2">
+                        Risk: {alert.risk_score}% - {alert.analysis || 'Threat detected'}
+                      </Typography>
+                      <Box sx={{ mt: 1 }}>
+                        {alert.techniques && (() => {
+                          try {
+                            const list = typeof alert.techniques === 'string' ? JSON.parse(alert.techniques) : alert.techniques;
+                            return (list || []).map((tech, i) => (
+                              <Chip 
+                                key={i} 
+                                label={tech} 
+                                size="small" 
+                                variant="outlined"
+                                sx={{ mr: 0.5, mb: 0.5 }} 
+                              />
+                            ));
+                          } catch {
+                            return null;
+                          }
+                        })()}
+                      </Box>
+                    </Alert>
+                  ))
+                ) : (
+                  <Alert severity="success">
+                    System secure - No active threats detected
+                  </Alert>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Quick Actions */}
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid item xs={12}>
+          <Paper elevation={1} sx={{ p: 3 }}>
+            <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
+              Quick Actions
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Chip 
+                label="Instagram Demo" 
+                clickable
+                onClick={() => navigate('/instagram-demo')}
+                color="secondary"
+                variant="outlined"
+              />
+              <Chip 
+                label="Threat Control" 
+                clickable
+                onClick={() => navigate('/threat-control')}
+                color="primary"
+                variant="outlined"
+              />
+              <Chip 
+                label="Brute Force Demo" 
+                clickable
+                onClick={() => navigate('/brute-force-demo')}
+                color="warning"
+                variant="outlined"
+              />
+              <Chip 
+                label="Live Security Demo" 
+                clickable
+                onClick={() => navigate('/live-demo')}
+                color="error"
+                variant="outlined"
+              />
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

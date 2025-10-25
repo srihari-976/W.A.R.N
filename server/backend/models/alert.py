@@ -7,12 +7,20 @@ class Alert(db.Model):
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True)
+    # Core fields
     type = Column(String(50), nullable=False)
     severity = Column(String(20), nullable=False)
     description = Column(Text, nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
     status = Column(String(20), nullable=False, default='new')
     risk_score = Column(Float)
+    
+    # Extended analysis fields (for MITRE/LLM pipeline)
+    threat_level = Column(String(20), nullable=True)
+    techniques = Column(Text, nullable=True)  # JSON string of techniques e.g., ["T1110"]
+    analysis = Column(Text, nullable=True)
+    is_anomaly = Column(db.Boolean, default=False)
+    source = Column(String(50), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -29,14 +37,19 @@ class Alert(db.Model):
     event = relationship('SecurityEvent', backref='alerts')
     responses = relationship('Response', backref='alert', lazy=True)
     
-    def __init__(self, type, severity, description, asset_id=None, created_by_id=None):
+    def __init__(self, type, severity, description, asset_id=None, created_by_id=None, **kwargs):
         self.type = type
         self.severity = severity
         self.description = description
         self.asset_id = asset_id
         self.created_by_id = created_by_id
         self.status = 'new'
-        self.risk_score = 0.0
+        self.risk_score = kwargs.get('risk_score', 0.0)
+        self.threat_level = kwargs.get('threat_level')
+        self.techniques = kwargs.get('techniques')
+        self.analysis = kwargs.get('analysis')
+        self.is_anomaly = kwargs.get('is_anomaly', False)
+        self.source = kwargs.get('source')
         
     def to_dict(self):
         """Convert alert to dictionary"""
@@ -47,6 +60,11 @@ class Alert(db.Model):
             'description': self.description,
             'status': self.status,
             'risk_score': self.risk_score,
+            'threat_level': self.threat_level,
+            'techniques': self.techniques,
+            'analysis': self.analysis,
+            'is_anomaly': self.is_anomaly,
+            'source': self.source,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'asset_id': self.asset_id,

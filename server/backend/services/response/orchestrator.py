@@ -2,9 +2,10 @@ from datetime import datetime
 from backend.models.alert import Alert
 from backend.models.response import Response
 from backend.models.asset import Asset
-from backend.utils.logging import get_logger
+from backend.db import db
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class ResponseOrchestrator:
     def __init__(self):
@@ -75,15 +76,20 @@ class ResponseOrchestrator:
             # Create response objects
             responses = []
             for action in actions:
-                response = Response(
-                    action=action,
-                    description=f"{action} for {alert.threat_type}",
-                    alert_id=alert.id,
-                    created_by_id=1,  # TODO: Get actual user ID
-                    parameters=self._get_action_parameters(action, alert, asset)
-                )
-                response.save()
-                responses.append(response)
+                try:
+                    response = Response(
+                        action=action,
+                        description=f"{action} for {alert.threat_type}",
+                        alert_id=alert.id,
+                        created_by_id=1,
+                        parameters=self._get_action_parameters(action, alert, asset)
+                    )
+                    db.session.add(response)
+                    db.session.commit()
+                    responses.append(response)
+                except Exception as e:
+                    logger.error(f"Error creating response {action}: {e}")
+                    db.session.rollback()
                 
             return responses
             

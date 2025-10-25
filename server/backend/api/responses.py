@@ -3,20 +3,19 @@ from flask import Blueprint, request, jsonify
 from backend.models.response import Response
 from backend.models.event import Event
 from backend.models.asset import Asset
-from backend.services.response.actions import execute_response_action
-from backend.services.response.automation import create_automation_workflow
 from backend.services.response.orchestrator import ResponseOrchestrator
-from backend.services.response.actions import ActionExecutor
-from backend.utils.logging import get_logger
+from backend.services.response.actions import ResponseService
+from backend.services.response.automation import create_automation_workflow
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # Create Blueprint for responses API
 responses_bp = Blueprint('responses', __name__)
 
 # Initialize response components
 response_orchestrator = ResponseOrchestrator()
-action_executor = ActionExecutor()
+response_service = ResponseService()
 
 @responses_bp.route('/responses', methods=['GET'])
 def get_responses():
@@ -135,10 +134,10 @@ def execute_response():
             return jsonify({'error': 'Response not found'}), 404
             
         # Execute response
-        result = action_executor.execute(
+        result = response_service.execute_response(
             response.action_type,
             response.parameters,
-            data['context']
+            data.get('context', {})
         )
         
         return jsonify({
