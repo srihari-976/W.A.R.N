@@ -332,9 +332,7 @@ Feel free to fork and modify for your use.
 
 The system demonstrates next-generation endpoint security with AI-powered threat detection and Instagram-style user protection mechanisms.
 
-
-
-
+<!--
 # From repo root
 cd server/backend
 
@@ -357,6 +355,8 @@ cd frontend
 npm install
 # If your backend is not on port 5000, create .env with REACT_APP_API_BASE_URL
 # echo REACT_APP_API_BASE_URL=http://localhost:5000 > .env
+
+-->
 
 npm start
 
