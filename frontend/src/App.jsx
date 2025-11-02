@@ -12,35 +12,22 @@ import ThreatControl from './components/demo/ThreatControl';
 import LiveSecurityDemo from './components/demo/LiveSecurityDemo';
 import Analytics from './components/analytics/Analytics';
 import LoginForm from './components/LoginForm';
-import ProtectedRoute from './components/ProtectedRoute';
-import { useAuth } from './useAuth';
 
 function App() {
-  const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
-    return (
-      <ThemeProvider theme={enterpriseTheme}>
-        <CssBaseline />
-        <LoginForm onLoginSuccess={() => window.location.reload()} />
-      </ThemeProvider>
-    );
-  }
-
   return (
     <ThemeProvider theme={enterpriseTheme}>
       <CssBaseline />
       <Router>
         <Layout>
           <Routes>
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/security" element={<ProtectedRoute><SecurityDashboard /></ProtectedRoute>} />
-            <Route path="/brute-force-demo" element={<ProtectedRoute><BruteForceDemo /></ProtectedRoute>} />
-            <Route path="/instagram-demo" element={<ProtectedRoute><InstagramDemo /></ProtectedRoute>} />
-            <Route path="/threat-control" element={<ProtectedRoute><ThreatControl /></ProtectedRoute>} />
-            <Route path="/live-demo" element={<ProtectedRoute><LiveSecurityDemo /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/security" element={<SecurityDashboard />} />
+            <Route path="/brute-force-demo" element={<BruteForceDemo />} />
+            <Route path="/instagram-demo" element={<InstagramDemo />} />
+            <Route path="/threat-control" element={<ThreatControl />} />
+            <Route path="/live-demo" element={<LiveSecurityDemo />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/login" element={<LoginForm onLoginSuccess={() => window.location.href = '/'} />} />
           </Routes>
         </Layout>
