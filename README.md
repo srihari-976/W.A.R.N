@@ -327,10 +327,15 @@ This project was created for BrinHack 2025. To contribute:
 Feel free to fork and modify for your use.
 
 ---
+
 <!--
+
 **W.A.R.N MVP is ready for BrinHack 2025! 🎯**
 
 The system demonstrates next-generation endpoint security with AI-powered threat detection and Instagram-style user protection mechanisms.
+
+
+
 
 # From repo root
 cd server/backend
